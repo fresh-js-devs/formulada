@@ -1,42 +1,39 @@
 import React from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { Formik, Field, useField, FieldArray } from 'formik';
+import { Formik, Field, useField } from 'formik';
 import { Input, Button, Checkbox, Radio, Select } from 'antd';
 import * as yup from 'yup';
 
-import Container from '../components/atoms/Container';
-import MainHeading from '../components/atoms/MainHeading';
-import SecondaryHeading from '../components/atoms/SecondaryHeading';
-import StyledButton from '../components/atoms/StyledButton';
+import Container from '../components/Container';
+import MainHeading from '../components/MainHeading';
+import SecondaryHeading from '../components/SecondaryHeading';
 
 const { Option } = Select;
 
-const RadioField = ({ placeholder, ...props }) => {
-  const [field] = useField(props);
-  return <Radio {...field}>{placeholder}</Radio>;
-};
-
-const SelectField = ({ placeholder, items, ...props }) => {
+const SelectField = ({ label, placeholder, items, ...props }) => {
   const [field, meta, helper] = useField(props);
+  const errorMessage = meta.error && meta.touched ? meta.error : '';
 
   return (
-    <Select
-      onChange={(value, option) => {
-        helper.setValue(value);
-        field.onChange(value, option);
-      }}
-      onBlur={(value) => {
-        helper.setTouched(value);
-        field.onBlur && field.onBlur(value);
-      }}
-      value={
-        field.value === '' || field.value === null ? undefined : field.value
-      }
-      placeholder={placeholder}
-    >
-      {items}
-    </Select>
+    <>
+      <div>{label}*</div>
+      <Select
+        onChange={(value, option) => {
+          helper.setValue(value);
+          field.onChange(value, option);
+        }}
+        onBlur={(value) => {
+          helper.setTouched(value);
+          field.onBlur && field.onBlur(value);
+        }}
+        value={!field.value ? undefined : field.value}
+        placeholder={placeholder}
+      >
+        {items}
+      </Select>
+      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+    </>
   );
 };
 
@@ -45,20 +42,17 @@ const TextField = ({ label, ...props }) => {
   const errorMessage = meta.error && meta.touched ? meta.error : '';
 
   return (
-    <div>
-      {errorMessage && <span style={{ color: 'red' }}>{errorMessage}</span>}
+    <>
+      <label>{label}*</label>
       <Input {...field} />
-    </div>
+      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+    </>
   );
 };
 
 const validationSchema = yup.object({
-  firstName: yup.string().required().max(10),
-  pets: yup.array().of(
-    yup.object({
-      name: yup.string().required(),
-    }),
-  ),
+  name: yup.string().required().max(10),
+  customExtra: yup.string().required(),
 });
 
 const FormikExample = () => {
@@ -68,10 +62,11 @@ const FormikExample = () => {
         initialValues={{
           name: '',
           address: '',
-          isRequired: false,
-          specifications: [],
-          gender: '',
-          skills: [{ type: '', description: '' }],
+          phoneNumber: '',
+          isQuarantined: false,
+          extras: [],
+          paymentMethod: '',
+          customExtra: '',
         }}
         // validate={(values) => {
         //   const errors = {};
@@ -90,100 +85,77 @@ const FormikExample = () => {
           // resetForm();
         }}
       >
-        {({ values, errors, isSubmitting, handleSubmit }) => (
+        {({ values, errors, isSubmitting, handleSubmit, isValid }) => (
           <form onSubmit={handleSubmit}>
-            <MainHeading>Formik Example</MainHeading>
-            <TextField name='name' label='Name' type='input' />
-            <TextField name='address' label='address' type='input' />
-            <Field name='isRequired' type='checkbox' as={Checkbox} />
+            <MainHeading>Formulada</MainHeading>
+            <TextField name='name' type='input' label='Full name' />
+            <TextField name='address' type='input' label='Address' />
+            <TextField name='phoneNumber' type='input' label='Phone number' />
+            <Field name='isQuarantined' type='checkbox' as={Checkbox}>
+              I am in quarantine
+            </Field>
             <div>
-              <SecondaryHeading>Specifications</SecondaryHeading>
+              <SecondaryHeading>Extras</SecondaryHeading>
               <Field
-                name='specifications'
+                name='extras'
                 type='checkbox'
                 as={Checkbox}
-                value='hdmiPort'
-              />
-              <Field
-                name='specifications'
-                type='checkbox'
-                as={Checkbox}
-                value='bluetooth'
-              />
-              <Field
-                name='specifications'
-                type='checkbox'
-                as={Checkbox}
-                value='externalGraphicCard'
-              />
+                value='grilledBacon'
+              >
+                Grilled bacon
+              </Field>
+              <Field name='extras' type='checkbox' as={Checkbox} value='chedar'>
+                Chedar
+              </Field>
+              <Field name='extras' type='checkbox' as={Checkbox} value='eggs'>
+                Eggs
+              </Field>
+              <Field name='extras' type='checkbox' as={Checkbox} value='chilli'>
+                Chilli
+              </Field>
+              <Field name='extras' type='checkbox' as={Checkbox} value='olives'>
+                Olives
+              </Field>
             </div>
             <div>
-              <SecondaryHeading>Gender</SecondaryHeading>
-              <RadioField
-                name='gender'
-                placeholder='Male'
-                value='male'
+              <SecondaryHeading>Method of payment</SecondaryHeading>
+              <Field name='paymentMethod' value='card' type='radio' as={Radio}>
+                Card
+              </Field>
+              <Field name='paymentMethod' value='cash' type='radio' as={Radio}>
+                Cash
+              </Field>
+              <Field
+                name='paymentMethod'
+                value='mealTickets'
                 type='radio'
-              />
-              <RadioField
-                name='gender'
-                placeholder='Female'
-                value='female'
-                type='radio'
-              />
-              <RadioField
-                name='gender'
-                placeholder='Other'
-                value='other'
-                type='radio'
-              />
+                as={Radio}
+              >
+                Meal Tickets
+              </Field>
             </div>
             <div>
-              <SecondaryHeading>Skills</SecondaryHeading>
-              <FieldArray name='skills'>
-                {(arrayHelpers) => (
-                  <div>
-                    {values.skills.map((_, index) => {
-                      const skillDescription = `skills.${index}.description`;
-                      const skillType = `skills.${index}.type`;
-
-                      return (
-                        <div key={index}>
-                          <TextField
-                            name={skillDescription}
-                            type='input'
-                            label='Description'
-                          />
-                          <SelectField
-                            name={skillType}
-                            placeholder='Type'
-                            type='input'
-                            items={[
-                              <Option key='react' value='react'>
-                                React
-                              </Option>,
-                              <Option key='csharp' value='csharp'>
-                                C#
-                              </Option>,
-                              <Option key='html' value='html'>
-                                HTML
-                              </Option>,
-                            ]}
-                          />
-                          <Button onClick={() => arrayHelpers.remove(index)}>
-                            x
-                          </Button>
-                        </div>
-                      );
-                    })}
-                    <Button
-                      onClick={() => arrayHelpers.push({ name: '', type: '' })}
-                    >
-                      + Add pet
-                    </Button>
-                  </div>
-                )}
-              </FieldArray>
+              <SecondaryHeading>Custom Extra</SecondaryHeading>
+              <SelectField
+                name='customExtra'
+                placeholder='Select a Custom Extra'
+                type='select'
+                label='Choose an Extra'
+                items={[
+                  <Option key='fish' value='fish'>
+                    Fish
+                  </Option>,
+                  <Option key='meat' value='meat'>
+                    Meat
+                  </Option>,
+                  <Option key='vegetarian' value='vegetarian'>
+                    Vegetarian
+                  </Option>,
+                  <Option key='vegan' value='vegan'>
+                    Vegan
+                  </Option>,
+                ]}
+              />
             </div>
             {/* <Input
             name='name'
@@ -197,8 +169,8 @@ const FormikExample = () => {
             onBlur={handleBlur}
             value={values.address}
           /> */}
-            <Button disabled={isSubmitting} htmlType='submit'>
-              Submit
+            <Button disabled={!isValid || isSubmitting} htmlType='submit'>
+              ORDER
             </Button>
             {/* <StyledButton disabled={isSubmitting} htmlType='submit'>
               Submit

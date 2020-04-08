@@ -1,9 +1,9 @@
 import React from 'react';
 
-import Routes from './routes';
+import FormikExample from './pages/FormikExample';
 
 function App() {
-  return <Routes />;
+  return <FormikExample />;
 }
 
 export default App;
